@@ -6,6 +6,22 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { validateProductionConfig } from "./config.js";
 import { createOtpProvider } from "./passenger-auth.js";
 const production = process.env.NODE_ENV === "production";
+if (!process.env.APP_ORIGIN && process.env.RENDER_EXTERNAL_URL) {
+  process.env.APP_ORIGIN = process.env.RENDER_EXTERNAL_URL.replace(/\/+$/, "");
+}
+if (process.env.APP_ORIGIN) {
+  let origin = process.env.APP_ORIGIN.trim().replace(/\/+$/, "");
+  if (!origin.startsWith("http://") && !origin.startsWith("https://")) {
+    origin = `https://${origin}`;
+  }
+  process.env.APP_ORIGIN = origin;
+}
+if (!process.env.REPLAY_SECRET && production) {
+  process.env.REPLAY_SECRET = token();
+}
+if (!process.env.PROXY_SECRET && production) {
+  process.env.PROXY_SECRET = token();
+}
 validateProductionConfig(process.env);
 const otpProvider = createOtpProvider(production);
 const db = await database(
