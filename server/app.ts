@@ -330,25 +330,34 @@ export function createApp(
   app.get("/api/auth/me", (req: AuthRequest, res) =>
     res.json({ user: req.user || null, csrf: req.session?.csrf || null }),
   );
+  app.get("/api/setup/status", async (_req, res) => {
+    const admin = await one(db, "SELECT id FROM users WHERE role='admin'");
+    res.json({ needsSetup: !admin });
+  });
   app.post("/api/setup", async (req, res) => {
+    const existing = await one(db, "SELECT id FROM users WHERE role='admin'");
     requireThat(
-      !options.production && options.setupToken,
-      403,
-      "Use the administrator setup command on the server.",
+      !existing,
+      409,
+      "An administrator already exists. Please sign in.",
     );
+    if (!options.production && options.setupToken) {
+      const tokenInput = (req.body as any)?.token;
+      if (tokenInput) {
+        requireThat(
+          hash(tokenInput) === hash(options.setupToken),
+          403,
+          "Invalid setup token.",
+        );
+      }
+    }
     const input = z
       .object({
-        token: z.string().min(30).max(100),
         name,
         email: z.email(),
         password: z.string().min(12).max(128),
       })
       .parse(req.body);
-    requireThat(
-      hash(input.token) === hash(options.setupToken),
-      403,
-      "Invalid setup token. Open the private setup link printed in your server terminal.",
-    );
     await createAdmin(db, input.email, input.password, input.name);
     res.json({ ok: true });
   });

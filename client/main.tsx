@@ -267,7 +267,15 @@ function Login({ onLogin }: { onLogin: (user: Row) => void }) {
     window.location.pathname.replace(/\/+$/, "") === "/staff" ||
     window.location.pathname.startsWith("/scan/");
   const [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [needsSetup, setNeedsSetup] = useState(false);
+  useEffect(() => {
+    if (!staffEntry) {
+      api<{ needsSetup: boolean }>("/setup/status")
+        .then((res) => setNeedsSetup(!!res?.needsSetup))
+        .catch(() => {});
+    }
+  }, [staffEntry]);
   return (
     <div className="login-layout">
       <section className="login-story">
@@ -305,6 +313,32 @@ function Login({ onLogin }: { onLogin: (user: Row) => void }) {
               : "Sign in to the administrator workspace."}
           </p>
           {!staffEntry && <a href="/staff">Open service staff login</a>}
+          {needsSetup && !staffEntry && (
+            <div
+              style={{
+                background: "rgba(234, 88, 12, 0.12)",
+                border: "1px solid #ea580c",
+                borderRadius: "8px",
+                padding: "1rem",
+                marginTop: "1rem",
+                marginBottom: "1rem",
+              }}
+            >
+              <strong style={{ color: "#ea580c", display: "block" }}>
+                First-time setup required:
+              </strong>
+              <p style={{ margin: "4px 0 10px 0", fontSize: "0.9rem" }}>
+                No administrator account exists yet. Create your administrator account to get started.
+              </p>
+              <a
+                className="button"
+                href="/setup"
+                style={{ display: "inline-flex", padding: "0.5rem 1rem", fontSize: "0.9rem" }}
+              >
+                Create Administrator Account <ArrowRight size={16} />
+              </a>
+            </div>
+          )}
           <form
             onSubmit={async (event) => {
               event.preventDefault();
@@ -403,7 +437,7 @@ function Setup() {
                 try {
                   await api("/setup", {
                     ...Object.fromEntries(new FormData(event.currentTarget)),
-                    token: setupToken.current,
+                    token: setupToken.current || undefined,
                   });
                   setDone(true);
                 } catch (error) {
