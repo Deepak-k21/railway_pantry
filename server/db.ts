@@ -16,7 +16,14 @@ export async function database(
   directory?: string,
 ): Promise<Database> {
   if (url) {
-    const pool = new pg.Pool({ connectionString: url });
+    const isLocal =
+      url.includes("localhost") ||
+      url.includes("127.0.0.1") ||
+      url.includes("::1");
+    const pool = new pg.Pool({
+      connectionString: url,
+      ssl: isLocal ? undefined : { rejectUnauthorized: false },
+    });
     return {
       exec: async (sql) => {
         await pool.query(sql);
