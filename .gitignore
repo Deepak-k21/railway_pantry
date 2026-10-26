@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+!.env.cloudflare.example
+.dev.vars*
+.wrangler/
+build/
+.data/
+coverage/
+*.log
+android/.gradle/
+android/local.properties
+*.jks
+*.keystore

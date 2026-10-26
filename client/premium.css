@@ -1,0 +1,776 @@
+:root {
+  --green: #3e46ac;
+  --muted: #667089;
+  --line: #e2e5f0;
+  --orange: #c55432;
+  --cream: #f0effa;
+  color: #242e49;
+  background: #f6f7fc;
+}
+body {
+  background:
+    radial-gradient(ellipse at 95% 0%, #e8e6ff 0, transparent 42%),
+    radial-gradient(ellipse at 0% 65%, #fff0e5 0, transparent 38%), #f6f7fc;
+}
+button,
+.button,
+.card,
+.stat,
+.welcome-steps article,
+.panel,
+.nav-link,
+input,
+select,
+textarea {
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease,
+    background 0.22s ease;
+}
+button,
+.button {
+  border-radius: 12px;
+}
+button:hover,
+.button:hover {
+  background: #30388c;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline-color: #6968da;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #7774d0;
+  box-shadow: 0 0 0 4px #7774d015;
+}
+input,
+select,
+textarea {
+  color: #26314d;
+  border-color: #cfd5e5;
+}
+label,
+.muted {
+  color: #626b80;
+}
+.brand-icon {
+  background: linear-gradient(135deg, #f9b17d, #df7d64);
+  color: #342544;
+  box-shadow: 0 6px 18px #e9926533;
+}
+.brand strong {
+  color: #243056;
+}
+.brand small {
+  color: #746b8e;
+}
+.sidebar {
+  background: linear-gradient(170deg, #18223e, #262b54 65%, #33365d);
+  border-right: 1px solid #3c4665;
+}
+.sidebar .brand strong {
+  color: #fff3e8;
+}
+.sidebar .brand small,
+.nav-label {
+  color: #c1c6e1;
+}
+.sidebar .nav-link {
+  color: #d4daef;
+}
+.sidebar .nav-link.active {
+  background: linear-gradient(100deg, #645bd0, #4354a2);
+  color: white;
+  box-shadow: 0 8px 24px #10152655;
+}
+.sidebar .nav-link:hover {
+  background: #ffffff16;
+  color: white;
+}
+.sidebar .nav-link.active:hover {
+  background: #615ed0;
+}
+.profile small,
+.service-note,
+.service-note small {
+  color: #bbc4df;
+}
+.profile {
+  color: white;
+}
+.avatar {
+  background: #e3ddff;
+  color: #514293;
+}
+.workspace > main {
+  background: transparent;
+}
+.topbar {
+  background: #ffffffd9;
+  backdrop-filter: blur(14px);
+  border-color: var(--line);
+}
+.page-heading h1 {
+  color: #27345a;
+  letter-spacing: -1.4px;
+}
+.eyebrow {
+  color: #7461a8;
+}
+.service-banner {
+  background: linear-gradient(115deg, #293b70, #575499);
+  border: 1px solid #7278b1;
+  box-shadow: 0 12px 28px #38477918;
+}
+.service-banner p,
+.service-banner small {
+  color: #d9def5;
+}
+.stat {
+  border-radius: 18px;
+  box-shadow: 0 4px 18px #24325305;
+  border-top: 3px solid #8270d4;
+  background: linear-gradient(145deg, #f2edff, #fff 75%);
+}
+.stat:nth-child(4n + 2) {
+  border-top-color: #ea9871;
+  background: linear-gradient(145deg, #fff0e5, #fff 75%);
+}
+.stat:nth-child(4n + 3) {
+  border-top-color: #54a7a0;
+  background: linear-gradient(145deg, #e5f5f1, #fff 75%);
+}
+.stat:nth-child(4n + 4) {
+  border-top-color: #6797d8;
+  background: linear-gradient(145deg, #eaf2ff, #fff 75%);
+}
+.stat > strong {
+  color: #293756;
+  font-weight: 750;
+}
+.stat svg {
+  color: #7765be;
+}
+.stat:nth-child(4n + 2) svg {
+  color: #bc613a;
+}
+.stat:nth-child(4n + 3) svg {
+  color: #287e77;
+}
+.stat:nth-child(4n + 4) svg {
+  color: #4679bc;
+}
+.stat small,
+.stat > span {
+  color: #626e85;
+}
+.panel,
+.card {
+  border-radius: 18px;
+  border-color: #e1e5f0;
+  box-shadow: 0 6px 25px #242e4905;
+}
+.card-icon {
+  color: #7360bb;
+  background: #f0eafa;
+  border-radius: 12px;
+  padding: 7px;
+  width: 42px;
+  height: 42px;
+}
+.cards > .card:nth-child(3n + 2) .card-icon {
+  color: #b65c34;
+  background: #fff0e6;
+}
+.cards > .card:nth-child(3n + 3) .card-icon {
+  color: #267b82;
+  background: #e5f4f5;
+}
+.secondary,
+button.secondary {
+  background: #f0f0fa;
+  color: #454b8f;
+  border: 1px solid #d9dcf0;
+}
+.text-button {
+  color: #5356a4;
+}
+.notice {
+  color: #344b78;
+  background: #edf3ff;
+  border-color: #d4dff8;
+  border-radius: 14px;
+}
+.request-alerts {
+  background: #fff5e7;
+  color: #784c21;
+  border-color: #eccb9a;
+}
+.badge.submitted {
+  background: #fff0d8;
+  color: #895213;
+}
+.badge.assigned {
+  background: #eee8ff;
+  color: #6048a2;
+}
+.badge.in_progress {
+  background: #e6f0ff;
+  color: #3464a0;
+}
+.badge.delivered,
+.badge.active,
+.badge.validated {
+  background: #e1f4ed;
+  color: #236753;
+}
+.badge.cancelled,
+.badge.revoked,
+.badge.expired {
+  background: #fce8e8;
+  color: #a13e4b;
+}
+.danger,
+.text-button.danger {
+  color: #ad384a;
+}
+.qr-service,
+.qr-missing {
+  background: #f4f2fc;
+  border-color: #d5c9ed;
+}
+.staff-workspace .sidebar {
+  background: linear-gradient(160deg, #192e45, #22464d 70%, #3d6462);
+}
+.staff-workspace .sidebar .nav-link.active {
+  background: linear-gradient(100deg, #327b83, #3e6296);
+}
+.staff-steps > .card:first-child {
+  background: linear-gradient(135deg, #fff2e9, white 75%);
+  border-top: 3px solid #dd916e;
+}
+.staff-steps > .card:nth-child(2) {
+  background: linear-gradient(135deg, #eaf2ff, white 75%);
+  border-top: 3px solid #769ddd;
+}
+.login-story {
+  background:
+    linear-gradient(135deg, #131e3bf0, #2b2b56b8),
+    url("/images/railway-landscape-v1.png") center/cover;
+}
+.login-story:after {
+  opacity: 0.12;
+}
+.story-content em {
+  color: #ffbf95;
+}
+.login-story .brand strong {
+  color: #fff;
+}
+.login-form {
+  background: #faf9ff;
+}
+.passenger {
+  background: transparent;
+}
+.passenger > header {
+  background: #ffffffde;
+  border-color: #e4e5ef;
+}
+.passenger-label {
+  color: #675695;
+}
+.passenger-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1.06fr;
+  padding: 44px;
+  gap: 35px;
+  border-radius: 30px;
+  background:
+    radial-gradient(ellipse at 80% 0%, #514577, transparent 65%),
+    linear-gradient(135deg, #172440, #283355);
+  box-shadow: 0 22px 60px #25385923;
+  overflow: hidden;
+}
+.passenger-hero > div:first-child {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+.passenger-hero h1 {
+  font-family: Georgia, serif;
+  font-size: clamp(38px, 4.8vw, 65px);
+  line-height: 1.08;
+  color: #fff8ef;
+}
+.passenger-hero em {
+  color: #ffc39b;
+}
+.passenger-hero .eyebrow {
+  color: #c5bcff;
+  letter-spacing: 2px;
+}
+.passenger-hero p {
+  color: #d9def0;
+  font-size: 13px;
+}
+.passenger-hero .welcome-copy {
+  margin-top: 18px;
+  max-width: 360px;
+}
+.welcome-cta {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: linear-gradient(110deg, #fbc18e, #f2a782);
+  color: #322a37;
+  box-shadow: 0 6px 25px #ec9b732e;
+  margin-top: 27px;
+  padding: 16px 26px;
+}
+.welcome-cta:after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -50%;
+  background: linear-gradient(
+    100deg,
+    transparent 40%,
+    #fff9 50%,
+    transparent 60%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.7s ease;
+}
+.welcome-cta:hover:after {
+  transform: translateX(100%);
+}
+.welcome-cta:hover {
+  background: #ffcd9e;
+  color: #322a37;
+}
+.welcome-steps {
+  gap: 20px;
+}
+.welcome-steps article {
+  background: linear-gradient(145deg, #f1ecff, #fff 75%);
+  border-color: #ddd4f2;
+  box-shadow: 0 8px 28px #403f6808;
+}
+.welcome-steps article:nth-child(2) {
+  background: linear-gradient(145deg, #fff0e5, #fff 75%);
+  border-color: #efd9c9;
+}
+.welcome-steps article:nth-child(3) {
+  background: linear-gradient(145deg, #e8f4f8, #fff 75%);
+  border-color: #d0e5ed;
+}
+.welcome-steps article > span {
+  color: #d4c8eb;
+}
+.welcome-steps article:nth-child(2) > span {
+  color: #eed1b9;
+}
+.welcome-steps article:nth-child(3) > span {
+  color: #c2dfe5;
+}
+.welcome-steps svg {
+  color: #6552a1;
+}
+.welcome-steps h2 {
+  color: #263451;
+}
+.categories button.selected {
+  background: #504d99;
+  color: white;
+}
+.product-placeholder {
+  background:
+    radial-gradient(ellipse at top, #f7e8cf, transparent),
+    linear-gradient(120deg, #e9e4fa, #e9f1fa);
+  color: #77608e;
+}
+.tracking {
+  background:
+    radial-gradient(ellipse at top, #e8e2fb, transparent 70%), #f8f9fc;
+}
+.success-icon {
+  background: #e4f3ed;
+  color: #277461;
+}
+.passenger-entry {
+  width: min(100%, 600px);
+  margin: 30px auto;
+}
+.passenger-entry h1 {
+  color: #263451;
+  font-size: 30px;
+  margin-bottom: 14px;
+}
+.passenger-entry .scanner {
+  margin-top: 24px;
+}
+.passenger-auth {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: clamp(24px, 5vw, 70px);
+  align-items: center;
+  padding: 28px 0 50px;
+}
+.passenger-auth-story h1 {
+  font-size: clamp(32px, 4vw, 55px);
+  line-height: 1.12;
+  letter-spacing: -1.5px;
+  margin: 14px 0;
+  color: #263451;
+}
+.passenger-auth-story h1 em {
+  color: #8060a6;
+  font-family: Georgia, serif;
+}
+.passenger-auth-story > p {
+  color: #6a7084;
+  margin-bottom: 24px;
+}
+.passenger-auth-card {
+  padding: clamp(24px, 3vw, 40px);
+  background: #fff;
+  box-shadow: 0 20px 65px #343a6810;
+}
+.passenger-auth-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 19px;
+  color: #7160ac;
+  background: #f0ebff;
+  margin-bottom: 24px;
+}
+.passenger-auth-card h2 {
+  font-size: 28px;
+  line-height: 1.2;
+  margin: 12px 0;
+  color: #263451;
+}
+.passenger-auth-card form {
+  display: grid;
+  gap: 20px;
+  margin-top: 26px;
+}
+.passenger-auth-card form > button {
+  width: 100%;
+  justify-content: center;
+  min-height: 49px;
+}
+.mobile-number-field {
+  display: flex;
+  align-items: center;
+  border: 1px solid #d9dce6;
+  border-radius: 10px;
+  background: #fafbff;
+  overflow: hidden;
+}
+.mobile-number-field:focus-within {
+  outline: 2px solid #9a83cf;
+  outline-offset: 2px;
+}
+.mobile-number-field > span {
+  padding: 0 14px;
+  border-right: 1px solid #d9dce6;
+  font-weight: 600;
+  color: #4e5570;
+}
+.mobile-number-field input {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  min-width: 0;
+  box-shadow: none;
+}
+.mobile-number-field input:focus {
+  outline: none;
+}
+.otp-input {
+  text-align: center;
+  letter-spacing: 9px;
+  font-size: 25px;
+  font-variant-numeric: tabular-nums;
+}
+.otp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 18px;
+}
+.otp-local-note {
+  font-size: 12px;
+  padding: 12px;
+  background: #fff6e6;
+  color: #845c24;
+  border: 1px solid #f1dfbd;
+  border-radius: 9px;
+  margin-top: 20px;
+}
+.passenger-auth-security {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  color: #72798d;
+  margin-top: 24px;
+}
+.passenger-auth-security svg {
+  flex-shrink: 0;
+}
+.passenger-account {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px 15px;
+  font-size: 12px;
+}
+.passenger-account > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #656281;
+}
+.scanner {
+  border: 1px solid #d9d1ed;
+  background: linear-gradient(135deg, #f1edff, #f7fbff);
+  padding: 20px;
+  border-radius: 16px;
+}
+.scanner-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  color: #66539b;
+}
+.scanner-heading svg {
+  flex-shrink: 0;
+}
+.scanner-heading h3 {
+  font-size: 16px;
+  margin: 0 0 4px;
+  color: #34405a;
+}
+.scanner-heading p {
+  font-size: 12px;
+  margin: 0;
+}
+.camera-trigger {
+  width: 100%;
+  justify-content: center;
+  min-height: 48px;
+}
+.railway-scene {
+  position: relative;
+  min-width: 0;
+  height: 370px;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid #ffffff35;
+  background: #44466e;
+  box-shadow: 0 16px 35px #080f293b;
+}
+.railway-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.railway-haze {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #25325922, transparent 45%, #17223ba8);
+  pointer-events: none;
+}
+.scene-label {
+  position: absolute;
+  top: 22px;
+  left: 22px;
+  color: white;
+  font-size: 9px;
+  letter-spacing: 2px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.scene-label > span {
+  width: 6px;
+  height: 6px;
+  background: #ffd1a1;
+  border-radius: 50%;
+  box-shadow: 0 0 15px #ffbd76;
+}
+.scene-ticket {
+  position: absolute;
+  bottom: 22px;
+  left: 22px;
+  right: 22px;
+  background: #fff6e9;
+  border: 1px solid #fff;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 17px;
+  color: #293653;
+  box-shadow: 0 5px 22px #111a3933;
+}
+.scene-ticket small {
+  font-size: 7px;
+  letter-spacing: 1.4px;
+  display: block;
+  color: #686079;
+}
+.scene-ticket strong {
+  display: block;
+  font-size: 25px;
+  line-height: 1.3;
+}
+.scene-ticket > span {
+  margin-left: auto;
+  font:
+    italic 13px/1.4 Georgia,
+    serif;
+  color: #8d593f;
+}
+.scene-motion {
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  border: 1px solid #fff6;
+  background: #1d2945bb;
+  padding: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  color: white;
+}
+@media (hover: hover) and (pointer: fine) {
+  button:not(:disabled):hover,
+  a.button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 18px #33456a1a;
+  }
+  .card:hover,
+  .stat:hover,
+  .welcome-steps article:hover {
+    transform: translateY(-4px);
+    border-color: #c4b5df;
+    box-shadow: 0 14px 30px #34426812;
+  }
+  .panel:hover {
+    border-color: #ccd0e5;
+  }
+  tbody tr:hover {
+    background: #f4f2fc;
+  }
+  .list-row:hover {
+    background: #f5f4fb;
+  }
+  .sidebar button:hover {
+    transform: translateX(3px);
+    box-shadow: none;
+  }
+}
+@media (max-width: 1000px) {
+  .passenger-hero {
+    gap: 24px;
+    padding: 30px;
+  }
+  .railway-scene {
+    height: 340px;
+  }
+}
+@media (max-width: 760px) {
+  .passenger-auth {
+    grid-template-columns: 1fr;
+    padding-top: 10px;
+    gap: 24px;
+  }
+  .passenger-auth-story h1 {
+    font-size: 35px;
+  }
+  .passenger-auth-story .railway-scene {
+    height: 210px;
+  }
+  .passenger-auth-card {
+    padding: 25px 20px;
+    grid-row: 1;
+  }
+  .passenger-account {
+    max-width: 170px;
+  }
+  .passenger-hero {
+    grid-template-columns: 1fr;
+    padding: 28px 22px 20px;
+    border-radius: 24px;
+    gap: 30px;
+  }
+  .passenger-hero h1 {
+    font-size: 43px;
+  }
+  .passenger-hero p {
+    font-size: 13px;
+  }
+  .passenger-hero .eyebrow {
+    font-size: 8px;
+    letter-spacing: 1.5px;
+  }
+  .railway-scene {
+    height: 295px;
+  }
+  .scene-ticket {
+    left: 12px;
+    right: 12px;
+    bottom: 14px;
+    padding: 12px;
+    gap: 8px;
+  }
+  .scene-label {
+    left: 15px;
+    font-size: 7px;
+    letter-spacing: 1px;
+  }
+  .scene-ticket > span {
+    font-size: 11px;
+  }
+  .welcome-cta {
+    min-width: 170px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *:before,
+  *:after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  .card:hover,
+  .stat:hover,
+  .welcome-steps article:hover,
+  button:hover,
+  a.button:hover {
+    transform: none !important;
+  }
+}
+@media print {
+  .railway-scene {
+    display: none;
+  }
+}

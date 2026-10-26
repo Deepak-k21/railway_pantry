@@ -1,0 +1,72 @@
+{
+  "name": "railway-pantry",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "concurrently -k \"tsx watch server/index.ts\" \"vite --host 127.0.0.1\"",
+    "build": "tsc --noEmit && vite build",
+    "build:server": "tsc -p tsconfig.server.json && node -e \"require('node:fs').copyFileSync('server/schema.sql','build/server/schema.sql')\"",
+    "cloudflare:login": "wrangler login",
+    "cloudflare:init": "tsx scripts/cloudflare.ts init",
+    "cloudflare:typecheck": "tsc -p tsconfig.cloudflare.json",
+    "cloudflare:check": "npm run build && npm run build:server && npm run cloudflare:typecheck && wrangler deploy --dry-run --containers-rollout none --outdir .data/cloudflare-worker",
+    "cloudflare:ready": "tsx scripts/cloudflare.ts ready",
+    "cloudflare:setup": "tsx scripts/cloudflare.ts setup",
+    "cloudflare:deploy": "tsx scripts/cloudflare.ts deploy",
+    "cloudflare:status": "wrangler containers list",
+    "start": "tsx server/index.ts",
+    "setup": "tsx server/setup.ts",
+    "test": "tsx --test tests/*.test.ts",
+    "test:browser": "tsx tests/browser.ts",
+    "test:compiled": "npm run build:server && tsx tests/compiled-server.ts",
+    "check": "tsc --noEmit",
+    "format": "prettier --write client server shared tests *.json *.ts README.md",
+    "lint": "eslint client server shared cloudflare scripts/cloudflare.ts tests"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.10",
+    "@zxing/browser": "^0.2.1",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^18.0.8",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "lucide-react": "^1.59.0",
+    "pg": "^8.23.1",
+    "qrcode": "^1.5.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zod": "^4.6.7"
+  },
+  "overrides": {
+    "undici": "^7.30.1"
+  },
+  "devDependencies": {
+    "@cloudflare/containers": "^0.3.7",
+    "@cloudflare/workers-types": "^5.20261026.1",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.1",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.5",
+    "@types/pg": "^8.23.1",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/supertest": "^7.2.1",
+    "@vitejs/plugin-react": "^6.1.2",
+    "concurrently": "^10.0.6",
+    "eslint": "^10.13.0",
+    "prettier": "^3.9.10",
+    "supertest": "^7.3.1",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.2",
+    "vite": "^8.3.4",
+    "wrangler": "^4.152.0"
+  }
+}
