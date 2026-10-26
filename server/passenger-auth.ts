@@ -17,9 +17,10 @@ export interface OtpProvider {
 }
 
 export function createOtpProvider(production: boolean): OtpProvider {
-  const mode = process.env.OTP_PROVIDER || (production ? "twilio" : "console");
+  const allowConsole = process.env.ALLOW_CONSOLE_OTP === "true";
+  const mode = process.env.OTP_PROVIDER || (production && !allowConsole ? "twilio" : "console");
   if (mode === "console") {
-    if (production)
+    if (production && !allowConsole)
       throw new Error(
         "Console OTPs are only available locally. Configure Twilio Verify for production.",
       );
@@ -105,7 +106,9 @@ export function registerPassengerAuth(
 ) {
   const { secret, provider } = options;
   requireThat(
-    !options.production || provider.mode === "sms",
+    !options.production ||
+      provider.mode === "sms" ||
+      process.env.ALLOW_CONSOLE_OTP === "true",
     500,
     "Production requires SMS OTP delivery.",
   );

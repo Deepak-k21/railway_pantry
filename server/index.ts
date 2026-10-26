@@ -49,11 +49,11 @@ const server = app.listen(
       `Railway Pantry API ready on http://localhost:${process.env.PORT || 3001}`,
     );
     if (
-      !production &&
+      (!production || process.env.ALLOW_CONSOLE_OTP === "true") &&
       (!process.env.OTP_PROVIDER || process.env.OTP_PROVIDER === "console")
     )
       console.log(
-        "Passenger OTPs: local testing enabled. Requested codes appear in this terminal; no SMS is sent.",
+        "Passenger OTPs: console mode enabled. Requested codes appear in this terminal/log; no SMS is sent.",
       );
     if (setupToken)
       console.log(
