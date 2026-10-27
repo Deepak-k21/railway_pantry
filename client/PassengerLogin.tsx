@@ -39,13 +39,15 @@ export function PassengerLogin({
     try {
       const result = await api("/public/auth/send-otp", { qr, mobile });
       setChallenge(result);
-      setCode("");
+      setCode(result.demoOtp || "");
       setNow(Date.now());
       setResendAt(Date.now() + result.resendAfter * 1000);
       setNotice(
-        result.delivery === "console"
-          ? "Your code is ready in the backend terminal. Enter it below to continue."
-          : `Verification code sent to ${result.mobile}.`,
+        result.demoOtp
+          ? `Demo OTP: ${result.demoOtp} (Auto-filled below for testing)`
+          : result.delivery === "console"
+            ? "Your code is ready in the backend terminal. Enter it below to continue."
+            : `Verification code sent to ${result.mobile}.`,
       );
     } catch (error) {
       setError((error as Error).message);

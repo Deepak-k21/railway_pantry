@@ -252,6 +252,10 @@ export function registerPassengerAuth(
       );
       throw error;
     }
+    const showDemo =
+      provider.mode === "console" &&
+      (process.env.ALLOW_CONSOLE_OTP === "true" ||
+        process.env.SHOW_DEMO_OTP === "true");
     res
       .cookie("pantry_otp_browser", browser, { ...cookie, maxAge: 5 * 60000 })
       .json({
@@ -260,6 +264,7 @@ export function registerPassengerAuth(
         expiresIn: 300,
         resendAfter: 60,
         mobile: `+91 ••••••${input.mobile.slice(-4)}`,
+        ...(showDemo ? { demoOtp: code } : {}),
       });
   });
   app.post("/api/public/auth/verify-otp", limit, async (req, res) => {
