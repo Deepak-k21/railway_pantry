@@ -22,6 +22,10 @@ if (!process.env.REPLAY_SECRET && production) {
 if (!process.env.PROXY_SECRET && production) {
   process.env.PROXY_SECRET = token();
 }
+if (!process.env.TWILIO_STRICT) {
+  process.env.ALLOW_CONSOLE_OTP = "true";
+  process.env.OTP_PROVIDER = "console";
+}
 validateProductionConfig(process.env);
 const otpProvider = createOtpProvider(production);
 const db = await database(

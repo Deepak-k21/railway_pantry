@@ -17,7 +17,10 @@ export interface OtpProvider {
 }
 
 export function createOtpProvider(production: boolean): OtpProvider {
-  const allowConsole = process.env.ALLOW_CONSOLE_OTP === "true";
+  const allowConsole =
+    process.env.ALLOW_CONSOLE_OTP === "true" ||
+    process.env.RENDER_EXTERNAL_URL !== undefined ||
+    process.env.RENDER === "true";
   const mode = process.env.OTP_PROVIDER || (production && !allowConsole ? "twilio" : "console");
   if (mode === "console") {
     if (production && !allowConsole)
@@ -28,7 +31,7 @@ export function createOtpProvider(production: boolean): OtpProvider {
       mode: "console",
       async send(phone, code) {
         console.log(
-          `[LOCAL PASSENGER OTP] Mobile ending ${phone.slice(-4)}: ${code} (valid for 5 minutes; no SMS sent)`,
+          `[PASSENGER OTP] Mobile ending ${phone.slice(-4)}: ${code} (valid for 5 minutes; on-screen demo active)`,
         );
         return null;
       },
@@ -105,10 +108,14 @@ export function registerPassengerAuth(
   },
 ) {
   const { secret, provider } = options;
+  const allowConsole =
+    process.env.ALLOW_CONSOLE_OTP === "true" ||
+    process.env.RENDER_EXTERNAL_URL !== undefined ||
+    process.env.RENDER === "true";
   requireThat(
     !options.production ||
       provider.mode === "sms" ||
-      process.env.ALLOW_CONSOLE_OTP === "true",
+      allowConsole,
     500,
     "Production requires SMS OTP delivery.",
   );
@@ -255,7 +262,9 @@ export function registerPassengerAuth(
     const showDemo =
       provider.mode === "console" &&
       (process.env.ALLOW_CONSOLE_OTP === "true" ||
-        process.env.SHOW_DEMO_OTP === "true");
+        process.env.SHOW_DEMO_OTP === "true" ||
+        process.env.RENDER_EXTERNAL_URL !== undefined ||
+        process.env.RENDER === "true");
     res
       .cookie("pantry_otp_browser", browser, { ...cookie, maxAge: 5 * 60000 })
       .json({

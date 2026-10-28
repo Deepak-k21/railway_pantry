@@ -44,7 +44,7 @@ export function PassengerLogin({
       setResendAt(Date.now() + result.resendAfter * 1000);
       setNotice(
         result.demoOtp
-          ? `Demo OTP: ${result.demoOtp} (Auto-filled below for testing)`
+          ? `Your verification code is ${result.demoOtp} (auto-filled below).`
           : result.delivery === "console"
             ? "Your code is ready in the backend terminal. Enter it below to continue."
             : `Verification code sent to ${result.mobile}.`,
@@ -114,25 +114,81 @@ export function PassengerLogin({
           }}
         >
           {challenge ? (
-            <label>
-              Verification code
-              <input
-                ref={codeField}
-                className="otp-input"
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                pattern="[0-9]{6}"
-                maxLength={6}
-                minLength={6}
-                placeholder="000000"
-                required
-                value={code}
-                onChange={(event) =>
-                  setCode(event.target.value.replace(/\D/g, "").slice(0, 6))
-                }
-              />
-            </label>
+            <>
+              {challenge.demoOtp && (
+                <div
+                  style={{
+                    background: "rgba(34, 197, 94, 0.12)",
+                    border: "1px solid #16a34a",
+                    borderRadius: "8px",
+                    padding: "12px 16px",
+                    marginBottom: "14px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <div>
+                    <span
+                      style={{
+                        fontSize: "0.8rem",
+                        color: "#166534",
+                        fontWeight: 600,
+                        display: "block",
+                      }}
+                    >
+                      Instant Verification Code:
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "1.4rem",
+                        fontWeight: 700,
+                        letterSpacing: "3px",
+                        color: "#15803d",
+                      }}
+                    >
+                      {challenge.demoOtp}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCode(challenge.demoOtp)}
+                    style={{
+                      padding: "6px 12px",
+                      fontSize: "0.85rem",
+                      background: "#16a34a",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      width: "auto",
+                      margin: 0,
+                    }}
+                  >
+                    Use Code
+                  </button>
+                </div>
+              )}
+              <label>
+                Verification code
+                <input
+                  ref={codeField}
+                  className="otp-input"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
+                  minLength={6}
+                  placeholder="000000"
+                  required
+                  value={code}
+                  onChange={(event) =>
+                    setCode(event.target.value.replace(/\D/g, "").slice(0, 6))
+                  }
+                />
+              </label>
+            </>
           ) : (
             <div>
               <label htmlFor="passenger-mobile">Mobile number</label>
