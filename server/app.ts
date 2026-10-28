@@ -1081,6 +1081,175 @@ export function createApp(
       expires_at: qr.expires_at,
     });
   });
+  app.get("/api/public/demo-qr", async (_req, res) => {
+    const qr = await one(
+      db,
+      "SELECT q.encrypted_token, c.code AS coach, s.name AS service_name, s.number " +
+        "FROM qr_codes q " +
+        "JOIN compartments c ON c.id=q.compartment_id " +
+        "JOIN services s ON s.id=q.service_id " +
+        "WHERE q.kind='passenger' AND q.revoked_at IS NULL AND q.expires_at>now() " +
+        "ORDER BY q.created_at DESC LIMIT 1",
+    );
+    if (!qr || !qr.encrypted_token) {
+      return res.json({ available: false });
+    }
+    try {
+      const data = unseal(qr.encrypted_token, replaySecret);
+      res.json({
+        available: true,
+        token: data.token,
+        coach: qr.coach,
+        service_name: qr.service_name,
+        number: qr.number,
+      });
+    } catch {
+      res.json({ available: false });
+    }
+  });
+  app.post("/api/admin/seed-demo", permit("admin"), async (req: AuthRequest, res) => {
+    const today = new Date().toISOString().split("T")[0];
+    const result = await db.transaction(async (sql) => {
+      let service = await one(
+        sql,
+        "SELECT id FROM services WHERE active=true ORDER BY service_date DESC LIMIT 1",
+      );
+      let serviceId = service?.id;
+      if (!serviceId) {
+        serviceId = randomUUID();
+        await sql.query(
+          "INSERT INTO services(id,name,number,service_date,origin,destination,active) VALUES($1,$2,$3,$4,$5,$6,true)",
+          [
+            serviceId,
+            "Vande Bharat Express",
+            "20607",
+            today,
+            "Chennai Central (MAS)",
+            "Mysuru Jn (MYS)",
+          ],
+        );
+      }
+      for (const code of ["C1", "C2", "C3"]) {
+        const existing = await one(
+          sql,
+          "SELECT id FROM compartments WHERE service_id=$1 AND code=$2",
+          [serviceId, code],
+        );
+        if (!existing) {
+          await sql.query(
+            "INSERT INTO compartments(id,service_id,code) VALUES($1,$2,$3)",
+            [randomUUID(), serviceId, code],
+          );
+        }
+      }
+      const compartments = (
+        await sql.query(
+          "SELECT id,code FROM compartments WHERE service_id=$1 ORDER BY code",
+          [serviceId],
+        )
+      ).rows;
+      const catIds: Record<string, string> = {};
+      for (const cName of ["Beverages", "Snacks", "Meals"]) {
+        const cat = await one(sql, "SELECT id FROM categories WHERE name=$1", [
+          cName,
+        ]);
+        if (!cat) {
+          const cid = randomUUID();
+          await sql.query("INSERT INTO categories(id,name) VALUES($1,$2)", [
+            cid,
+            cName,
+          ]);
+          catIds[cName] = cid;
+        } else {
+          catIds[cName] = cat.id;
+        }
+      }
+      const demoProducts = [
+        {
+          name: "Masala Chai",
+          cat: "Beverages",
+          price: 2000,
+          desc: "Fresh hot brewed tea with aromatic spices",
+        },
+        {
+          name: "Filter Coffee",
+          cat: "Beverages",
+          price: 3000,
+          desc: "Authentic South Indian filter coffee",
+        },
+        {
+          name: "Vegetable Samosa (2 pcs)",
+          cat: "Snacks",
+          price: 4000,
+          desc: "Crispy fried pastry filled with spiced potatoes & peas",
+        },
+        {
+          name: "Veg Cutlet & Bread",
+          cat: "Snacks",
+          price: 5000,
+          desc: "Golden spiced vegetable cutlets with toasted bread",
+        },
+        {
+          name: "Paneer Veg Biryani",
+          cat: "Meals",
+          price: 15000,
+          desc: "Fragrant basmati rice cooked with fresh paneer & whole spices",
+        },
+        {
+          name: "Packaged Drinking Water (1L)",
+          cat: "Beverages",
+          price: 1500,
+          desc: "Purified sealed drinking water bottle",
+        },
+      ];
+      for (const p of demoProducts) {
+        const prod = await one(sql, "SELECT id FROM products WHERE name=$1", [
+          p.name,
+        ]);
+        let prodId = prod?.id;
+        if (!prodId) {
+          prodId = randomUUID();
+          await sql.query(
+            "INSERT INTO products(id,name,category_id,description,price,active) VALUES($1,$2,$3,$4,$5,true)",
+            [prodId, p.name, catIds[p.cat], p.desc, p.price],
+          );
+        }
+        const inv = await one(
+          sql,
+          "SELECT service_id FROM inventory WHERE service_id=$1 AND product_id=$2",
+          [serviceId, prodId],
+        );
+        if (!inv) {
+          await sql.query(
+            "INSERT INTO inventory(service_id,product_id,opening,adjustments,reserved,sold) VALUES($1,$2,50,0,0,0)",
+            [serviceId, prodId],
+          );
+        }
+      }
+      const expires = new Date(Date.now() + 7 * 86400000).toISOString();
+      for (const comp of compartments) {
+        const existingQr = await one(
+          sql,
+          "SELECT id FROM qr_codes WHERE kind='passenger' AND service_id=$1 AND compartment_id=$2 AND revoked_at IS NULL AND expires_at>now()",
+          [serviceId, comp.id],
+        );
+        if (!existingQr) {
+          const raw = token();
+          const qrId = randomUUID();
+          await sql.query(
+            "INSERT INTO qr_codes(id,token_hash,kind,service_id,compartment_id,product_id,created_by,expires_at) VALUES($1,$2,'passenger',$3,$4,null,$5,$6)",
+            [qrId, hash(raw), serviceId, comp.id, req.user!.id, expires],
+          );
+          await sql.query(
+            "UPDATE qr_codes SET encrypted_token=$1 WHERE id=$2",
+            [JSON.stringify(seal({ token: raw }, replaySecret)), qrId],
+          );
+        }
+      }
+      return { ok: true, serviceId };
+    });
+    res.json(result);
+  });
   const passengerAuth = registerPassengerAuth(app, db, {
     secret: replaySecret,
     production: !!options.production,

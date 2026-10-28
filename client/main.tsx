@@ -31,6 +31,7 @@ import {
   PackageCheck,
   LoaderCircle,
   Camera,
+  Sparkles,
 } from "lucide-react";
 import {
   api,
@@ -1787,10 +1788,67 @@ function Workspace({ user, onLogout }: { user: Row; onLogout: () => void }) {
               )}
               {user.role === "admin" && view === "qr" && (
                 <>
+                  {!selected && (
+                    <div
+                      style={{
+                        background: "rgba(37, 99, 235, 0.08)",
+                        border: "1px solid #3b82f6",
+                        borderRadius: "10px",
+                        padding: "16px 20px",
+                        marginBottom: "16px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        flexWrap: "wrap",
+                        gap: "12px",
+                      }}
+                    >
+                      <div>
+                        <strong
+                          style={{
+                            color: "#1e40af",
+                            display: "block",
+                            fontSize: "1rem",
+                          }}
+                        >
+                          No Train Service Selected
+                        </strong>
+                        <p
+                          style={{
+                            margin: "4px 0 0 0",
+                            color: "#475569",
+                            fontSize: "0.9rem",
+                          }}
+                        >
+                          QR codes belong to specific train services & coaches.
+                          Click below to automatically create a sample train and
+                          all QR codes!
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="button"
+                        disabled={busy}
+                        onClick={() => action("/admin/seed-demo", {})}
+                        style={{ display: "inline-flex", gap: "6px" }}
+                      >
+                        <Sparkles size={16} /> Load Sample Train & Generate QRs
+                      </button>
+                    </div>
+                  )}
                   <div className="toolbar">
                     <button disabled={!selected} onClick={() => qrForm()}>
                       <Plus size={17} />
                       Generate QR
+                    </button>
+                    <button
+                      type="button"
+                      className="secondary"
+                      disabled={busy}
+                      onClick={() => action("/admin/seed-demo", {})}
+                      style={{ display: "inline-flex", gap: "6px" }}
+                    >
+                      <Sparkles size={16} /> Quick Setup Coaches & QRs
                     </button>
                     <span className="muted">
                       Reopen saved codes anytime. Regeneration invalidates the
@@ -1813,10 +1871,11 @@ function Workspace({ user, onLogout }: { user: Row; onLogout: () => void }) {
                     ))}
                   </div>
                   <p className="payment-note">
-                    Passenger and location codes need a compartment. Food codes
-                    need a catalogue product with opening stock. Localhost links
-                    work only on this computer; phone scanning requires a
-                    reachable, securely hosted address.
+                    ℹ️ How QRs work: Passenger & location QRs are generated for
+                    specific compartments (e.g. Coach C1, C2). Food collection
+                    QRs require a product with opening stock. Phone cameras can
+                    scan the QR code directly to open the live passenger
+                    ordering menu.
                   </p>
                   <div className="cards">
                     {data.qrs.map((entry: Row) => (
