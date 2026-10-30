@@ -48,6 +48,7 @@ import "./premium.css";
 import { RailwayScene } from "./RailwayScene";
 import { PassengerLogin } from "./PassengerLogin";
 import { PassengerEntry } from "./PassengerEntry";
+import { PaymentCheckout, PaymentStatus } from "./PaymentCheckout";
 
 const labels: Row = {
   submitted: "Awaiting assignment",
@@ -267,6 +268,8 @@ function Login({ onLogin }: { onLogin: (user: Row) => void }) {
   const staffEntry =
     window.location.pathname.replace(/\/+$/, "") === "/staff" ||
     window.location.pathname.startsWith("/scan/");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [needsSetup, setNeedsSetup] = useState(false);
@@ -313,7 +316,59 @@ function Login({ onLogin }: { onLogin: (user: Row) => void }) {
               ? "Use the staff email and password issued by your administrator. Your scanned code will remain ready after sign in."
               : "Sign in to the administrator workspace."}
           </p>
-          {!staffEntry && <a href="/staff">Open service staff login</a>}
+          <nav className="login-switches" aria-label="Choose your workspace">
+            {staffEntry ? (
+              <a href="/">Administrator login</a>
+            ) : (
+              <a href="/staff">Service staff login</a>
+            )}
+            <a href="/user">User login</a>
+          </nav>
+          <div
+            style={{
+              margin: "14px 0",
+              padding: "12px 14px",
+              background: "#f1f5f9",
+              border: "1px solid #cbd5e1",
+              borderRadius: "8px",
+              fontSize: "0.85rem",
+              lineHeight: 1.5,
+            }}
+          >
+            <div style={{ fontWeight: 600, color: "#0f172a", marginBottom: "4px" }}>
+              {staffEntry ? "Demo Service Staff Credentials:" : "Demo Administrator Credentials:"}
+            </div>
+            <div>
+              Email:{" "}
+              <strong style={{ userSelect: "all", color: "#2563eb" }}>
+                {staffEntry ? "staff@railway.com" : "admin@railway.com"}
+              </strong>
+            </div>
+            <div>
+              Password:{" "}
+              <strong style={{ userSelect: "all", color: "#2563eb" }}>
+                {staffEntry ? "Staff@12345678" : "Admin@12345678"}
+              </strong>
+            </div>
+            <button
+              type="button"
+              className="text-button"
+              style={{
+                marginTop: "6px",
+                padding: 0,
+                color: "#1d4ed8",
+                fontWeight: 600,
+                fontSize: "0.82rem",
+                cursor: "pointer",
+              }}
+              onClick={() => {
+                setEmail(staffEntry ? "staff@railway.com" : "admin@railway.com");
+                setPassword(staffEntry ? "Staff@12345678" : "Admin@12345678");
+              }}
+            >
+              Click to autofill credentials →
+            </button>
+          </div>
           {needsSetup && !staffEntry && (
             <div
               style={{
@@ -329,12 +384,17 @@ function Login({ onLogin }: { onLogin: (user: Row) => void }) {
                 First-time setup required:
               </strong>
               <p style={{ margin: "4px 0 10px 0", fontSize: "0.9rem" }}>
-                No administrator account exists yet. Create your administrator account to get started.
+                No administrator account exists yet. Create your administrator
+                account to get started.
               </p>
               <a
                 className="button"
                 href="/setup"
-                style={{ display: "inline-flex", padding: "0.5rem 1rem", fontSize: "0.9rem" }}
+                style={{
+                  display: "inline-flex",
+                  padding: "0.5rem 1rem",
+                  fontSize: "0.9rem",
+                }}
               >
                 Create Administrator Account <ArrowRight size={16} />
               </a>
@@ -364,6 +424,8 @@ function Login({ onLogin }: { onLogin: (user: Row) => void }) {
               <input
                 type="email"
                 name="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 autoComplete="username"
                 required
                 placeholder="you@your-organisation.in"
@@ -374,6 +436,8 @@ function Login({ onLogin }: { onLogin: (user: Row) => void }) {
               <input
                 type="password"
                 name="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 required
               />
@@ -488,6 +552,80 @@ function Setup() {
     </div>
   );
 }
+function UserPortal() {
+  const [demo, setDemo] = useState<Row | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showScanner, setShowScanner] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    api<Row>("/public/demo-qr")
+      .then((res) => {
+        if (res && res.available && res.token) {
+          setDemo(res);
+        } else {
+          setError("No active train service available right now.");
+        }
+      })
+      .catch((err) => setError((err as Error).message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <Loading />;
+
+  if (showScanner || !demo?.token) {
+    return (
+      <div className="passenger">
+        <header>
+          <Brand />
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            {demo?.token && (
+              <button
+                type="button"
+                className="text-button"
+                onClick={() => setShowScanner(false)}
+              >
+                ← Back to Mobile Login
+              </button>
+            )}
+            <span className="passenger-label">ONBOARD SERVICE</span>
+          </div>
+        </header>
+        <PassengerEntry />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div
+        style={{
+          background: "#1e3a8a",
+          color: "#ffffff",
+          padding: "8px 16px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          fontSize: "0.85rem",
+        }}
+      >
+        <span>
+          🚆 <strong>{demo.service_name || "Express"} ({demo.number})</strong> · Coach {demo.coach} · Mobile Login
+        </span>
+        <button
+          type="button"
+          className="text-button"
+          style={{ color: "#bfdbfe", textDecoration: "underline", fontSize: "0.82rem" }}
+          onClick={() => setShowScanner(true)}
+        >
+          Sitting in another coach? Scan seat QR
+        </button>
+      </div>
+      <Passenger token={demo.token} />
+    </div>
+  );
+}
+
 function App() {
   const [user, setUser] = useState<Row | null>(null),
     [ready, setReady] = useState(false),
@@ -529,16 +667,7 @@ function App() {
     );
   if (!ready) return <Loading />;
   if (path === "/setup") return <Setup />;
-  if (path === "/user")
-    return (
-      <div className="passenger">
-        <header>
-          <Brand />
-          <span className="passenger-label">ONBOARD SERVICE</span>
-        </header>
-        <PassengerEntry />
-      </div>
-    );
+  if (path === "/user") return <UserPortal />;
   if (path.startsWith("/p/")) return <Passenger token={path.split("/")[2]} />;
   if (path.startsWith("/r/")) return <Tracking access={path.split("/")[2]} />;
   if (!user) return <Login onLogin={setUser} />;
@@ -1676,6 +1805,15 @@ function Workspace({ user, onLogout }: { user: Row; onLogout: () => void }) {
                       Latest {data.requests.length} requests · refreshes every
                       15 seconds
                     </span>
+                    <button
+                      className="secondary"
+                      disabled={busy}
+                      onClick={() =>
+                        void action("/admin/payments/reconcile", {})
+                      }
+                    >
+                      Recheck payments & refunds
+                    </button>
                   </div>
                   <div className="request-grid">
                     {data.requests
@@ -1711,10 +1849,18 @@ function Workspace({ user, onLogout }: { user: Row; onLogout: () => void }) {
                               </div>
                             ))}
                           </div>
+                          <PaymentStatus
+                            payment={entry.payment}
+                            closed={entry.status !== "submitted"}
+                          />
                           <p className="muted">
                             {entry.staff_name
                               ? `Assigned to ${entry.staff_name}`
-                              : "Waiting for assignment"}
+                              : entry.status !== "submitted"
+                                ? "No staff assignment"
+                                : entry.payment_status === "pending"
+                                  ? "Waiting for verified payment"
+                                  : "Waiting for assignment"}
                           </p>
                           <div className="card-footer">
                             {["submitted", "assigned"].includes(
@@ -1722,6 +1868,12 @@ function Workspace({ user, onLogout }: { user: Row; onLogout: () => void }) {
                             ) && (
                               <button
                                 className="secondary"
+                                disabled={entry.payment_status === "pending"}
+                                title={
+                                  entry.payment_status === "pending"
+                                    ? "Payment must be verified before assignment"
+                                    : undefined
+                                }
                                 onClick={() =>
                                   open(
                                     "Assign request",
@@ -2045,9 +2197,7 @@ function Workspace({ user, onLogout }: { user: Row; onLogout: () => void }) {
           )}
           <footer className="page-footer">
             <TrainFront size={15} /> Railway Pantry{" "}
-            <span>
-              Online service coordination · No online payment processing
-            </span>
+            <span>Online service coordination · Secure order tracking</span>
           </footer>
         </div>
       </main>
@@ -2541,6 +2691,7 @@ function Staff({
               </div>
               <Badge value={entry.status} />
             </div>
+            <PaymentStatus payment={entry.payment} />
             <div className="order-lines">
               {entry.items.map((item: Row) => (
                 <div key={item.product_id}>
@@ -2650,6 +2801,8 @@ function Staff({
 }
 function Passenger({ token }: { token: string }) {
   const [submitted, setSubmitted] = useState("");
+  const [submittedOnline, setSubmittedOnline] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("online");
   const [ordering, setOrdering] = useState(false);
   const [data, setData] = useState<Row | null>(null),
     [error, setError] = useState(""),
@@ -2679,7 +2832,9 @@ function Passenger({ token }: { token: string }) {
     return (
       <>
         <div role="status" className="notice">
-          Request sent successfully. Follow its current status below.
+          {submittedOnline
+            ? "Request saved. Complete secure payment below before staff assignment."
+            : "Request sent successfully. Follow its current status below."}
         </div>
         <Tracking access={submitted} />
       </>
@@ -2740,7 +2895,14 @@ function Passenger({ token }: { token: string }) {
             qr={token}
             context={data.context}
             delivery={data.otpDelivery}
-            onVerified={load}
+            onVerified={async () => {
+              await load();
+              const back = new URLSearchParams(window.location.search).get(
+                "return",
+              );
+              if (back && /^\/r\/[A-Za-z0-9_-]{30,100}$/.test(back))
+                window.location.assign(back);
+            }}
           />
         ) : (
           <>
@@ -2811,8 +2973,8 @@ function Passenger({ token }: { token: string }) {
                   <ShieldCheck />
                   <h2>Follow your request</h2>
                   <p>
-                    Keep your private tracking link. No online payment is
-                    collected here.
+                    Keep your private tracking link to follow payment and food
+                    delivery.
                   </p>
                 </article>
               </section>
@@ -2938,6 +3100,9 @@ function Passenger({ token }: { token: string }) {
                         "/public/requests",
                         {
                           qr: token,
+                          payment_method: data.payments?.enabled
+                            ? paymentMethod
+                            : "pay_on_delivery",
                           seat: form.get("seat"),
                           items: Object.entries(cart)
                             .filter(([, quantity]) => quantity > 0)
@@ -2953,6 +3118,7 @@ function Passenger({ token }: { token: string }) {
                         "",
                         "/r/" + result.access,
                       );
+                      setSubmittedOnline(!!result.payment_required);
                       setSubmitted(result.access);
                       window.scrollTo(0, 0);
                     } catch (error) {
@@ -2996,17 +3162,64 @@ function Passenger({ token }: { token: string }) {
                     <span>Request total</span>
                     <strong>{money(total)}</strong>
                   </div>
-                  <p className="payment-note">
-                    This is a food request. No online payment is collected.
-                    Confirm payment arrangements with pantry staff.
-                  </p>
+                  <fieldset className="payment-methods">
+                    <legend>Payment method</legend>
+                    {data.payments?.enabled && (
+                      <label>
+                        <input
+                          type="radio"
+                          name="payment_method"
+                          value="online"
+                          checked={paymentMethod === "online"}
+                          onChange={() => {
+                            setPaymentMethod("online");
+                            key.current = crypto.randomUUID();
+                          }}
+                        />
+                        Pay online with Razorpay
+                      </label>
+                    )}
+                    <label>
+                      <input
+                        type="radio"
+                        name="payment_method"
+                        value="pay_on_delivery"
+                        checked={
+                          !data.payments?.enabled ||
+                          paymentMethod === "pay_on_delivery"
+                        }
+                        onChange={() => {
+                          setPaymentMethod("pay_on_delivery");
+                          key.current = crypto.randomUUID();
+                        }}
+                      />
+                      Pay on delivery
+                    </label>
+                  </fieldset>
+                  {data.payments?.enabled && paymentMethod === "online" ? (
+                    <p className="payment-note">
+                      Your total is verified by the server. Complete payment on
+                      the next screen before staff assignment.
+                      {data.payments.mode === "test" &&
+                        " Test mode: no real money is transferred."}
+                    </p>
+                  ) : (
+                    <p className="payment-note">
+                      Payment is due on delivery. Confirm arrangements with
+                      pantry staff.
+                    </p>
+                  )}
                   {error && (
                     <p role="alert" className="error">
                       {error}
                     </p>
                   )}
                   <button disabled={busy || !Object.values(cart).some(Boolean)}>
-                    {busy ? "Submitting…" : "Send request"}
+                    {busy
+                      ? "Submitting…"
+                      : data.payments?.enabled && paymentMethod === "online"
+                        ? "Continue to payment"
+                        : "Send request"}
                     <ArrowRight size={17} />
                   </button>
                 </form>
@@ -3025,7 +3238,9 @@ function Tracking({ access }: { access: string }) {
     [busy, setBusy] = useState(false);
   const load = useCallback(async () => {
     try {
-      setRequest(await api("/public/request/" + encodeURIComponent(access)));
+      const result = await api("/public/request/" + encodeURIComponent(access));
+      setPassengerCsrf(result.passenger_csrf || null);
+      setRequest(result);
       setError("");
     } catch (error) {
       setError((error as Error).message);
@@ -3054,10 +3269,15 @@ function Tracking({ access }: { access: string }) {
           <span className="eyebrow">YOUR REQUEST</span>
           {request.status === "submitted" && (
             <div role="status">
-              <h2>Request received successfully</h2>
+              <h2>
+                {request.payment_status === "pending"
+                  ? "Complete your online payment"
+                  : "Request received successfully"}
+              </h2>
               <p>
-                Your food request is saved and waiting for the administrator to
-                assign service staff. Keep this page to follow its progress.
+                {request.payment_status === "pending"
+                  ? "Your items are reserved for 15 minutes. Complete payment to send the request to pantry staff."
+                  : "Your food request is saved and waiting for the administrator to assign service staff. Keep this page to follow its progress."}
               </p>
             </div>
           )}
@@ -3092,7 +3312,7 @@ function Tracking({ access }: { access: string }) {
               </div>
             ))}
           </div>
-          <p className="payment-note">No online payment has been collected.</p>
+          <PaymentCheckout access={access} request={request} onUpdate={load} />
           {request.status === "submitted" && (
             <button
               className="secondary"

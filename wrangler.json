@@ -5,6 +5,7 @@
   "compatibility_date": "2026-10-26",
   "workers_dev": true,
   "preview_urls": false,
+  "triggers": { "crons": ["*/5 * * * *"] },
   "observability": { "enabled": true, "head_sampling_rate": 0.1 },
   "vars": {
     "APP_ORIGIN": "https://railway-pantry.deepakkannika2.workers.dev"

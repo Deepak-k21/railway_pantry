@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { parse } from "dotenv";
+import { createRazorpay } from "../server/razorpay.js";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const config = JSON.parse(
@@ -125,10 +126,15 @@ try {
       "TWILIO_ACCOUNT_SID",
       "TWILIO_AUTH_TOKEN",
       "TWILIO_VERIFY_SERVICE_SID",
+      "PAYMENTS_MODE",
+      "RAZORPAY_KEY_ID",
+      "RAZORPAY_KEY_SECRET",
+      "RAZORPAY_WEBHOOK_SECRET",
     ]);
+    createRazorpay(secrets);
     if (Object.keys(secrets).some((key) => !allowed.has(key)))
       throw new Error(
-        "Keep only the six keys from .env.cloudflare.example in .env.cloudflare; other settings belong in wrangler.json.",
+        "Keep only the keys from .env.cloudflare.example in .env.cloudflare; other settings belong in wrangler.json.",
       );
     await run("docker", ["info", "--format", "{{.OSType}}"]);
     console.log(

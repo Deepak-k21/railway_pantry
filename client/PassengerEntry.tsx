@@ -27,17 +27,21 @@ export function PassengerEntry() {
     setBusy(true);
     setError("");
     const trimmed = value.trim();
-    if (/^\+?91?[6-9]\d{9}$/.test(trimmed.replace(/[\s()-]/g, ""))) {
-      setError(
-        "You entered a phone number. This step requires a coach QR link or code. Scan your coach QR or click the coach link below to enter.",
-      );
-      setBusy(false);
+    const rawDigits = trimmed.replace(/[\s+()-]/g, "");
+    if (/^[6-9]\d{9}$/.test(rawDigits) || (/^91[6-9]\d{9}$/.test(rawDigits) && rawDigits.length === 12)) {
+      const phone = rawDigits.length === 12 ? rawDigits.slice(2) : rawDigits;
+      window.location.assign("/user?phone=" + encodeURIComponent(phone));
       return;
     }
     try {
       const token = extractToken(value);
       await api("/public/qr/" + encodeURIComponent(token));
-      window.location.assign("/p/" + encodeURIComponent(token));
+      const back = new URLSearchParams(window.location.search).get("return");
+      const query =
+        back && /^\/r\/[A-Za-z0-9_-]{30,100}$/.test(back)
+          ? "?return=" + encodeURIComponent(back)
+          : "";
+      window.location.assign("/p/" + encodeURIComponent(token) + query);
     } catch (error) {
       setError((error as Error).message);
       setBusy(false);

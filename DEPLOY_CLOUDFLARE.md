@@ -70,7 +70,7 @@ Generate each new random secret separately:
 node -e "process.stdout.write(require('node:crypto').randomBytes(32).toString('base64url'))"
 ```
 
-Keep only those six keys in the private file. The deployment command uploads them as Cloudflare secrets with `--secrets-file`; they are not included in the Docker image or Worker source. `.env.cloudflare`, all private env variants, `.data`, and build/runtime caches are excluded from source control and Docker's build context. Never share this file, put it in a public repository, or paste its values into chat.
+Keep those six base keys in the private file. For online payments, also add the four optional Razorpay settings from `RAZORPAY_SETUP.md`; the deploy helper accepts them. The deployment command uploads these settings as Cloudflare secrets with `--secrets-file`; they are not included in the Docker image or Worker source. `.env.cloudflare`, all private env variants, `.data`, and build/runtime caches are excluded from source control and Docker's build context. Never share this file, put it in a public repository, or paste its values into chat.
 
 Back up the database and `REPLAY_SECRET` together. Changing or losing that secret prevents reopening saved QR previews and decrypting passenger data. If you later migrate existing local records, preserve the matching local replay key instead of generating a replacement.
 
@@ -113,6 +113,8 @@ The starter configuration routes all users to one named container and limits the
 The proxy passes the visitor IP through authenticated headers so rate limits distinguish passengers instead of treating the entire Cloudflare proxy as one device. The backend ignores unauthenticated/spoofed forwarding headers. Secure HTTP-only cookies and exact-origin CSRF checks remain enabled.
 
 ## Updates and troubleshooting
+
+When Razorpay keys are configured, the Worker cron triggers authenticated payment/refund maintenance every five minutes. The persistent refund queue survives restarts; scheduled maintenance may keep the container warm and affects Cloudflare usage. Test and live webhook settings must match their respective keys. Follow `RAZORPAY_SETUP.md` before enabling public payments.
 
 After editing source, run the normal tests and `npm run cloudflare:check`, then `npm run cloudflare:deploy`. The Docker image builds from source; the production image includes compiled JavaScript and production dependencies, not `tsx` or Wrangler. Database migrations run before the server opens its port. Shutdown waits for active requests before closing the database.
 

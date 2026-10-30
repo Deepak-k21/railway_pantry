@@ -97,3 +97,24 @@ CREATE TABLE IF NOT EXISTS passenger_otp_challenges (
 CREATE INDEX IF NOT EXISTS passenger_otp_phone ON passenger_otp_challenges(phone_hash,created_at DESC);
 CREATE INDEX IF NOT EXISTS passenger_otp_ip ON passenger_otp_challenges(ip_hash,created_at DESC);
 ALTER TABLE requests ADD COLUMN IF NOT EXISTS passenger_id uuid REFERENCES passengers(id);
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS payment_method text NOT NULL DEFAULT 'pay_on_delivery' CHECK(payment_method IN ('pay_on_delivery','online'));
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS payment_status text NOT NULL DEFAULT 'not_required' CHECK(payment_status IN ('not_required','pending','paid'));
+CREATE TABLE IF NOT EXISTS payment_orders (
+ request_id uuid PRIMARY KEY REFERENCES requests(id), provider_order_id text UNIQUE, provider_payment_id text UNIQUE,
+ amount integer NOT NULL CHECK(amount>=100), currency text NOT NULL DEFAULT 'INR' CHECK(currency='INR'),
+ key_id text NOT NULL, mode text NOT NULL CHECK(mode IN ('test','live')), status text NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','paid')),
+ refund_target integer NOT NULL DEFAULT 0 CHECK(refund_target>=0 AND refund_target<=amount),
+ refunded_amount integer NOT NULL DEFAULT 0 CHECK(refunded_amount>=0 AND refunded_amount<=amount),
+ expires_at timestamptz NOT NULL DEFAULT now()+interval '15 minutes', order_claimed_at timestamptz,
+ last_checked_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS payment_refunds (
+ id uuid PRIMARY KEY, request_id uuid NOT NULL REFERENCES payment_orders(request_id),
+ provider_refund_id text UNIQUE, amount integer NOT NULL CHECK(amount>0),
+ status text NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','submitted','processed','failed')),
+ attempts integer NOT NULL DEFAULT 0, lease_until timestamptz, next_retry_at timestamptz NOT NULL DEFAULT now(), last_error text,
+ created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS payment_events(id text PRIMARY KEY,event text NOT NULL,created_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX IF NOT EXISTS payment_pending ON payment_orders(status,last_checked_at);
+CREATE INDEX IF NOT EXISTS payment_refund_queue ON payment_refunds(status,next_retry_at);

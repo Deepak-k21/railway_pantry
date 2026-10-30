@@ -9,6 +9,10 @@ interface Env {
   TWILIO_ACCOUNT_SID: string;
   TWILIO_AUTH_TOKEN: string;
   TWILIO_VERIFY_SERVICE_SID: string;
+  PAYMENTS_MODE?: string;
+  RAZORPAY_KEY_ID?: string;
+  RAZORPAY_KEY_SECRET?: string;
+  RAZORPAY_WEBHOOK_SECRET?: string;
 }
 
 export class RailwayPantryContainer extends Container<Env> {
@@ -27,6 +31,10 @@ export class RailwayPantryContainer extends Container<Env> {
     TWILIO_ACCOUNT_SID: this.env.TWILIO_ACCOUNT_SID,
     TWILIO_AUTH_TOKEN: this.env.TWILIO_AUTH_TOKEN,
     TWILIO_VERIFY_SERVICE_SID: this.env.TWILIO_VERIFY_SERVICE_SID,
+    PAYMENTS_MODE: this.env.PAYMENTS_MODE || "test",
+    RAZORPAY_KEY_ID: this.env.RAZORPAY_KEY_ID || "",
+    RAZORPAY_KEY_SECRET: this.env.RAZORPAY_KEY_SECRET || "",
+    RAZORPAY_WEBHOOK_SECRET: this.env.RAZORPAY_WEBHOOK_SECRET || "",
   };
 }
 
@@ -79,6 +87,7 @@ export default {
       "x-forwarded-for",
       "x-pantry-client-ip",
       "x-pantry-proxy-secret",
+      "x-pantry-maintenance-secret",
     ])
       headers.delete(name);
     const clientIp = request.headers.get("CF-Connecting-IP");
@@ -94,5 +103,16 @@ export default {
       console.error("The application container is unavailable.");
       return unavailable();
     }
+  },
+  async scheduled(_event: ScheduledController, env: Env): Promise<void> {
+    if (!env.RAZORPAY_KEY_ID || !env.PROXY_SECRET || !env.APP_ORIGIN) return;
+    const response = await env.PANTRY.getByName("production").fetch(
+      new Request(env.APP_ORIGIN + "/api/internal/payments/reconcile", {
+        method: "POST",
+        headers: { "X-Pantry-Maintenance-Secret": env.PROXY_SECRET },
+      }),
+    );
+    await response.body?.cancel();
+    if (!response.ok) throw new Error("Payment maintenance was not completed.");
   },
 } satisfies ExportedHandler<Env>;

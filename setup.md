@@ -57,6 +57,8 @@ Public hosting is a separate step. Production requires a PostgreSQL server, an H
 
 ## 5. Enable real SMS later
 
+For online payments, follow **RAZORPAY_SETUP.md**. Add your test Key ID, Key Secret and separate webhook secret to the backend environment, then restart the project. Live mode is a separate explicit configuration after test payment/refund validation.
+
 For public hosting on Cloudflare, follow **DEPLOY_CLOUDFLARE.md**. The Cloudflare commands use a separate private `.env.cloudflare` file and hosted PostgreSQL; `npm run dev` remains the local setup described above.
 
 Create a Twilio Verify service with six-digit SMS codes. Copy `.env.example` to `.env` if needed and privately set `OTP_PROVIDER=twilio`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` and `TWILIO_VERIFY_SERVICE_SID`. Restart `npm run dev` after changing configuration. The app then sends and checks OTPs through Twilio Verify; codes are not printed locally. Until these credentials are configured, use the local terminal code. Production refuses console delivery. Provider credentials remain on the backend and must never be placed in frontend code.

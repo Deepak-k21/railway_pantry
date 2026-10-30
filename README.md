@@ -49,6 +49,7 @@ The staff entry point is `/staff`. Administrators create and assign staff accoun
 - Real PNG QR generation, download/print, expiry, revocation and replacement.
 - In-app QR camera reader with manual-entry fallback and explicit confirmation before stock/location changes.
 - Mobile passenger catalogue, quantities, seat entry and private order tracking.
+- Optional Razorpay Standard Checkout with verified captured payments, stock reservation expiry, payment tracking, webhook reconciliation and durable cancellation/partial-delivery refund jobs. See `RAZORPAY_SETUP.md` to add test keys before switching to live payments.
 - Operational dashboards based on database records, refreshing every 15 seconds.
 - Empty, loading, success and error states. No fake action buttons or seeded production data.
 
@@ -91,7 +92,7 @@ Cloudflare deployment is prepared in `wrangler.json`, `cloudflare/worker.ts` and
 ## Current limits to account for before release
 
 - Online operation only; no offline order submission or stock synchronisation.
-- No payment gateway: the app records requests and delivered value, not successful payments.
+- Real Razorpay account testing, public HTTPS webhook delivery and a live payment/refund still require the operator's credentials and configured payment account. Without payment configuration the app offers pay on delivery.
 - Operational requests show the most recent 500 records per service; the dashboard totals cover the whole service. Ledger/audit views show the most recent 200 events.
 - Product images use supplied HTTPS URLs; image uploads and storage are not implemented.
 - Rate limits are process-local. Horizontal scaling needs a shared limiter and reviewed database write-lock strategy.

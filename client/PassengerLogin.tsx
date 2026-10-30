@@ -14,7 +14,11 @@ export function PassengerLogin({
   delivery: string;
   onVerified: () => Promise<void>;
 }) {
-  const [mobile, setMobile] = useState("");
+  const initialPhone =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("phone") || ""
+      : "";
+  const [mobile, setMobile] = useState(initialPhone);
   const [code, setCode] = useState("");
   const [challenge, setChallenge] = useState<RecordData | null>(null);
   const [busy, setBusy] = useState(false);

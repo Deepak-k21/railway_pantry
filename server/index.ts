@@ -1,7 +1,8 @@
 import "dotenv/config";
 import { database, migrate, one } from "./db.js";
 import { createApp } from "./app.js";
-import { token } from "./security.js";
+import { token, passwordHash } from "./security.js";
+import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { validateProductionConfig } from "./config.js";
 import { createOtpProvider } from "./passenger-auth.js";
@@ -33,6 +34,49 @@ const db = await database(
   process.env.DATA_DIR || ".data/postgres",
 );
 await migrate(db);
+
+const defaultAdminEmail = (process.env.ADMIN_EMAIL || "admin@railway.com").toLowerCase();
+const defaultAdminPassword = process.env.ADMIN_PASSWORD || "Admin@12345678";
+try {
+  const adminHash = await passwordHash(defaultAdminPassword);
+  const existingAdmin = await one(db, "SELECT id FROM users WHERE email=$1", [defaultAdminEmail]);
+  if (!existingAdmin) {
+    await db.query(
+      "INSERT INTO users(id,email,name,password,role,active) VALUES($1,$2,$3,$4,'admin',true)",
+      [randomUUID(), defaultAdminEmail, "System Administrator", adminHash],
+    );
+    console.log(`[BOOT] Administrator created: ${defaultAdminEmail}`);
+  } else {
+    await db.query(
+      "UPDATE users SET password=$1, active=true, role='admin' WHERE id=$2",
+      [adminHash, existingAdmin.id],
+    );
+    console.log(`[BOOT] Administrator password synchronized for: ${defaultAdminEmail}`);
+  }
+} catch (err) {
+  console.error("[BOOT] Could not sync default admin:", err);
+}
+
+const defaultStaffEmail = "staff@railway.com";
+const defaultStaffPassword = "Staff@12345678";
+try {
+  const staffHash = await passwordHash(defaultStaffPassword);
+  const existingStaff = await one(db, "SELECT id FROM users WHERE email=$1", [defaultStaffEmail]);
+  if (!existingStaff) {
+    await db.query(
+      "INSERT INTO users(id,email,name,password,role,active) VALUES($1,$2,$3,$4,'staff',true)",
+      [randomUUID(), defaultStaffEmail, "Pantry Staff", staffHash],
+    );
+    console.log(`[BOOT] Staff created: ${defaultStaffEmail}`);
+  } else {
+    await db.query(
+      "UPDATE users SET password=$1, active=true, role='staff' WHERE id=$2",
+      [staffHash, existingStaff.id],
+    );
+  }
+} catch (err) {
+  console.error("[BOOT] Could not sync default staff:", err);
+}
 let replaySecret = process.env.REPLAY_SECRET;
 if (!replaySecret) {
   await mkdir(".data", { recursive: true });
@@ -81,16 +125,24 @@ const server = app.listen(
       );
   },
 );
+const paymentTimer = setInterval(() => {
+  void app.locals.payments
+    .maintain()
+    .catch(() => console.error("Payment reconciliation will retry."));
+}, 30000);
+paymentTimer.unref();
 let stopping = false;
 async function shutdown() {
   if (stopping) return;
   stopping = true;
+  clearInterval(paymentTimer);
   const timeout = setTimeout(() => process.exit(1), 15000);
   timeout.unref();
   try {
     await new Promise<void>((resolve, reject) =>
       server.close((error) => (error ? reject(error) : resolve())),
     );
+    await app.locals.payments.drain();
     await db.close();
     clearTimeout(timeout);
     process.exit(0);

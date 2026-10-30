@@ -4,6 +4,9 @@ import { database, migrate } from "../server/db.js";
 import { createApp } from "../server/app.js";
 import { token } from "../server/security.js";
 import QRCode from "qrcode";
+import { createHmac } from "node:crypto";
+import { validSignature, type PaymentGateway } from "../server/razorpay.js";
+import type { Row } from "../server/db.js";
 
 const origin = `http://${process.env.BROWSER_TEST_HOST || "localhost"}:4175`;
 const configuredOrigin = "http://localhost:4175";
@@ -11,11 +14,70 @@ const db = await database();
 await migrate(db);
 const setupToken = token();
 let passengerCode = "";
+const paymentSecret = "browser-test-only-payment-secret";
+const paymentOrders = new Map<string, Row>(),
+  capturedPayments = new Map<string, Row>(),
+  refunds = new Map<string, Row>();
+const paymentGateway: PaymentGateway = {
+  keyId: "rzp_test_browser",
+  mode: "test",
+  verifyCheckout: (order, payment, signature) =>
+    validSignature(`${order}|${payment}`, signature, paymentSecret),
+  verifyWebhook: () => false,
+  async createOrder(amount, receipt) {
+    const order = {
+      id: "order_" + (paymentOrders.size + 1),
+      amount,
+      currency: "INR",
+      receipt,
+      amount_paid: 0,
+      status: "created",
+    };
+    paymentOrders.set(order.id, order);
+    return order;
+  },
+  async findOrder(receipt) {
+    return [...paymentOrders.values()].find(
+      (order) => order.receipt === receipt,
+    );
+  },
+  async fetchOrder(id) {
+    return paymentOrders.get(id)!;
+  },
+  async fetchPayment(id) {
+    return capturedPayments.get(id)!;
+  },
+  async orderPayments(id) {
+    return [...capturedPayments.values()].filter(
+      (payment) => payment.order_id === id,
+    );
+  },
+  async capturePayment() {
+    throw new Error("Unexpected capture in browser fixture");
+  },
+  async refund(paymentId, amount, key) {
+    if (!refunds.has(key)) {
+      refunds.set(key, {
+        id: "rfnd_" + (refunds.size + 1),
+        payment_id: paymentId,
+        amount,
+        currency: "INR",
+        status: "processed",
+      });
+      capturedPayments.get(paymentId)!.amount_refunded += amount;
+    }
+    return refunds.get(key)!;
+  },
+  async fetchRefund(id) {
+    return [...refunds.values()].find((refund) => refund.id === id)!;
+  },
+};
 const app = createApp(db, {
   origin: configuredOrigin,
   staticDir: "dist",
   setupToken,
   disableRateLimit: true,
+  paymentGateway,
   otpProvider: {
     mode: "console",
     async send(_phone, code) {
@@ -86,6 +148,11 @@ try {
     .fill("Review-test-password-594!");
   await admin.getByRole("button", { name: "Create administrator" }).click();
   await admin.getByRole("link", { name: "Go to sign in" }).click();
+  await admin.getByRole("link", { name: "User login", exact: true }).click();
+  await expect(
+    admin.getByRole("heading", { name: "Passenger sign in", exact: true }),
+  ).toBeVisible();
+  await admin.goto(origin);
   await admin
     .getByLabel("Email address", { exact: true })
     .fill("review-admin@example.test");
@@ -302,6 +369,7 @@ try {
     .getByRole("button", { name: "Add Mineral water", exact: true })
     .click();
   await passenger.getByLabel("Your seat / berth", { exact: true }).fill("24");
+  await passenger.getByLabel("Pay on delivery", { exact: true }).check();
   await passenger.screenshot({
     path: ".data/browser-check/passenger-mobile.png",
     fullPage: true,
@@ -501,9 +569,105 @@ try {
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
+  await passenger.exposeBinding(
+    "completeTestPayment",
+    async (_source, orderId: string) => {
+      const order = paymentOrders.get(orderId)!;
+      const paymentId = "pay_" + (capturedPayments.size + 1);
+      capturedPayments.set(paymentId, {
+        id: paymentId,
+        order_id: orderId,
+        amount: order.amount,
+        currency: "INR",
+        captured: true,
+        status: "captured",
+        amount_refunded: 0,
+      });
+      order.status = "paid";
+      order.amount_paid = order.amount;
+      return {
+        razorpay_order_id: orderId,
+        razorpay_payment_id: paymentId,
+        razorpay_signature: createHmac("sha256", paymentSecret)
+          .update(`${orderId}|${paymentId}`)
+          .digest("hex"),
+      };
+    },
+  );
+  await passenger.route(
+    "https://checkout.razorpay.com/v1/checkout.js",
+    (route) =>
+      route.fulfill({
+        contentType: "application/javascript",
+        body: `window.Razorpay = class {
+      constructor(options) { this.options = options; }
+      on() {}
+      open() {
+        if (window.dismissTestCheckout) { this.options.modal.ondismiss(); return; }
+        window.completeTestPayment(this.options.order_id).then(result => this.options.handler(result));
+      }
+    };`,
+      }),
+  );
+  await passenger.goto(origin + "/p/" + passengerUrl.split("/").pop());
+  await passenger
+    .getByRole("button", { name: "Order food", exact: true })
+    .click();
+  await passenger
+    .getByRole("button", { name: "Add Mineral water", exact: true })
+    .click();
+  await passenger.getByLabel("Your seat / berth", { exact: true }).fill("25");
+  await passenger
+    .getByRole("button", { name: "Continue to payment", exact: true })
+    .click();
+  await expect(
+    passenger.getByRole("heading", {
+      name: "Complete your online payment",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await passenger.evaluate("window.dismissTestCheckout = true");
+  await passenger
+    .getByRole("button", { name: "Pay securely with Razorpay", exact: true })
+    .click();
+  await expect(
+    passenger.getByRole("status").filter({ hasText: "Checkout closed" }),
+  ).toBeVisible();
+  expect(capturedPayments.size).toBe(0);
+  await passenger.evaluate("window.dismissTestCheckout = false");
+  await passenger
+    .getByRole("button", { name: "Pay securely with Razorpay", exact: true })
+    .click();
+  await expect(
+    passenger.getByText("Paid online", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    passenger.getByText("TEST PAYMENT", { exact: true }),
+  ).toBeVisible();
+  await passenger.reload();
+  await expect(
+    passenger.getByText("Paid online", { exact: true }),
+  ).toBeVisible();
+  await passenger.screenshot({
+    path: ".data/browser-check/online-payment-mobile.png",
+    fullPage: true,
+  });
+  await passenger
+    .getByRole("button", { name: "Cancel request", exact: true })
+    .click();
+  await admin.getByRole("button", { name: "Toggle navigation" }).click();
+  await nav(admin, "Requests");
+  await admin
+    .getByRole("button", { name: "Recheck payments & refunds", exact: true })
+    .click();
+  await expect(admin.getByText(/^Refund processed:/)).toBeVisible();
+  await passenger.reload();
+  await expect(passenger.getByText(/^Refund processed:/)).toBeVisible();
+  expect(capturedPayments.size).toBe(1);
+  expect(refunds.size).toBe(1);
   assertNoErrors();
   console.log(
-    "Browser checks passed: first-run setup, admin configuration, passenger OTP and mobile order, video playback, assignment, staff collection/location/delivery, camera QR decoding, camera-denial fallback, and responsive overflow checks.",
+    "Browser checks passed: login switching, admin/staff workflows, passenger OTP, cash order, test Razorpay checkout/dismissal/verification/refund, video, camera QR decoding and responsive layout.",
   );
 } catch (error) {
   await admin.screenshot({
@@ -513,6 +677,7 @@ try {
   console.error(await admin.locator("body").innerText());
   throw error;
 } finally {
+  await app.locals.payments.drain();
   await browser.close();
   await new Promise<void>((resolve, reject) =>
     server.close((error) => (error ? reject(error) : resolve())),
