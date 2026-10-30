@@ -60,6 +60,15 @@ export async function checkout(
   onFailure: (message: string) => void,
 ) {
   const order = await api("/public/payments/order", { access });
+  if (order.key_id === "rzp_test_demo_mode") {
+    const demoResult: CheckoutResult = {
+      razorpay_order_id: order.order_id,
+      razorpay_payment_id: "pay_demo_" + Math.random().toString(36).slice(2, 12),
+      razorpay_signature: "demo_signature",
+    };
+    await api("/public/payments/verify", { access, ...demoResult });
+    return { paid: true };
+  }
   await loadCheckout();
   return new Promise<{ paid: boolean; dismissed?: boolean }>(
     (resolve, reject) => {

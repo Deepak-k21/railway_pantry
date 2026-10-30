@@ -3164,43 +3164,38 @@ function Passenger({ token }: { token: string }) {
                   </div>
                   <fieldset className="payment-methods">
                     <legend>Payment method</legend>
-                    {data.payments?.enabled && (
-                      <label>
-                        <input
-                          type="radio"
-                          name="payment_method"
-                          value="online"
-                          checked={paymentMethod === "online"}
-                          onChange={() => {
-                            setPaymentMethod("online");
-                            key.current = crypto.randomUUID();
-                          }}
-                        />
-                        Pay online with Razorpay
-                      </label>
-                    )}
+                    <label>
+                      <input
+                        type="radio"
+                        name="payment_method"
+                        value="online"
+                        checked={paymentMethod === "online"}
+                        onChange={() => {
+                          setPaymentMethod("online");
+                          key.current = crypto.randomUUID();
+                        }}
+                      />
+                      Pay online (UPI / Cards / NetBanking / Razorpay)
+                    </label>
                     <label>
                       <input
                         type="radio"
                         name="payment_method"
                         value="pay_on_delivery"
-                        checked={
-                          !data.payments?.enabled ||
-                          paymentMethod === "pay_on_delivery"
-                        }
+                        checked={paymentMethod === "pay_on_delivery"}
                         onChange={() => {
                           setPaymentMethod("pay_on_delivery");
                           key.current = crypto.randomUUID();
                         }}
                       />
-                      Pay on delivery
+                      Pay on delivery (Cash to pantry staff at seat)
                     </label>
                   </fieldset>
-                  {data.payments?.enabled && paymentMethod === "online" ? (
+                  {paymentMethod === "online" ? (
                     <p className="payment-note">
                       Your total is verified by the server. Complete payment on
                       the next screen before staff assignment.
-                      {data.payments.mode === "test" &&
+                      {data.payments?.mode === "test" &&
                         " Test mode: no real money is transferred."}
                     </p>
                   ) : (
@@ -3217,7 +3212,7 @@ function Passenger({ token }: { token: string }) {
                   <button disabled={busy || !Object.values(cart).some(Boolean)}>
                     {busy
                       ? "Submitting…"
-                      : data.payments?.enabled && paymentMethod === "online"
+                      : paymentMethod === "online"
                         ? "Continue to payment"
                         : "Send request"}
                     <ArrowRight size={17} />

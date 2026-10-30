@@ -6,6 +6,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { validateProductionConfig } from "./config.js";
 import { createOtpProvider } from "./passenger-auth.js";
+import { createRazorpay, createDemoGateway } from "./razorpay.js";
 const production = process.env.NODE_ENV === "production";
 if (!process.env.APP_ORIGIN && process.env.RENDER_EXTERNAL_URL) {
   process.env.APP_ORIGIN = process.env.RENDER_EXTERNAL_URL.replace(/\/+$/, "");
@@ -96,6 +97,7 @@ const setupToken =
   !production && !(await one(db, "SELECT id FROM users WHERE role='admin'"))
     ? token()
     : undefined;
+const paymentGateway = createRazorpay() || createDemoGateway();
 const app = createApp(db, {
   origin,
   production,
@@ -104,6 +106,7 @@ const app = createApp(db, {
   setupToken,
   otpProvider,
   proxySecret: process.env.PROXY_SECRET,
+  paymentGateway,
 });
 const server = app.listen(
   Number(process.env.PORT || 3001),

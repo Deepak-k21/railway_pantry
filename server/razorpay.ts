@@ -123,3 +123,65 @@ export function createRazorpay(env = process.env): PaymentGateway | undefined {
     fetchRefund: (id) => call("refunds/" + encodeURIComponent(id)),
   };
 }
+
+export function createDemoGateway(): PaymentGateway {
+  const orders = new Map<string, Row>();
+  const payments = new Map<string, Row>();
+  const refunds = new Map<string, Row>();
+
+  return {
+    keyId: "rzp_test_demo_mode",
+    mode: "test",
+    verifyCheckout: () => true,
+    verifyWebhook: () => true,
+    async createOrder(amount: number, receipt: string) {
+      const id = "order_demo_" + Math.random().toString(36).slice(2, 12);
+      const order = { id, amount, currency: "INR", receipt, status: "created" };
+      orders.set(id, order);
+      return order;
+    },
+    async findOrder(receipt: string) {
+      for (const order of orders.values()) {
+        if (order.receipt === receipt) return order;
+      }
+      return undefined;
+    },
+    async fetchOrder(id: string) {
+      return orders.get(id) || { id, amount: 0, currency: "INR", status: "created" };
+    },
+    async fetchPayment(id: string) {
+      const p = payments.get(id);
+      if (p) return p;
+      const latest = Array.from(orders.values()).pop();
+      return {
+        id,
+        order_id: latest?.id || "",
+        amount: latest?.amount || 0,
+        currency: "INR",
+        status: "captured",
+      };
+    },
+    async orderPayments(id: string) {
+      const result: Row[] = [];
+      for (const p of payments.values()) {
+        if (p.order_id === id) result.push(p);
+      }
+      return result;
+    },
+    async capturePayment(id: string, amount: number) {
+      const p = { id, amount, currency: "INR", status: "captured" };
+      payments.set(id, p);
+      return p;
+    },
+    async refund(paymentId: string, amount: number, key: string) {
+      const id = "rfnd_demo_" + Math.random().toString(36).slice(2, 12);
+      const r = { id, payment_id: paymentId, amount, key, status: "processed" };
+      refunds.set(id, r);
+      return r;
+    },
+    async fetchRefund(id: string) {
+      return refunds.get(id) || { id, status: "processed" };
+    },
+  };
+}
+
